@@ -38,6 +38,8 @@ func defaultTopicOptions(config TopicConfig) []kgo.Opt {
 		kgo.SASL(mechanism),
 		kgo.Dialer(tlsDialer.DialContext),
 		kgo.SessionTimeout(30 * time.Second),
+		kgo.RequestRetries(2),
+		kgo.RetryTimeout(5 * time.Second),
 		kgo.WithLogger(Logger{}),
 	}
 
