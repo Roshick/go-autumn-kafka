@@ -14,7 +14,8 @@ type rawTopicConfig struct {
 	Topic          string   `json:"topic"`
 	Brokers        []string `json:"brokers"`
 	Username       string   `json:"username"`
-	PasswordEnvVar string   `json:"passwordEnvVar"`
+	Password       *string  `json:"password,omitempty"`
+	PasswordEnvVar *string  `json:"passwordEnvVar,omitempty"`
 	ConsumerGroup  *string  `json:"consumerGroup,omitempty"`
 	AuthType       string   `json:"authType"`
 }
@@ -68,10 +69,20 @@ func parseTopicConfigs(jsonString string) (map[string]TopicConfig, error) {
 
 	topicConfigs := make(map[string]TopicConfig)
 	for key, rawConfig := range rawConfigs {
-		password := auconfigenv.Get(rawConfig.PasswordEnvVar)
+		var password string
 		// We do not support accessing topics without a password
-		if password == "" {
-			return nil, fmt.Errorf("kafka-topic %s password variable %s is empty", rawConfig.Topic, rawConfig.PasswordEnvVar)
+		if rawConfig.PasswordEnvVar != nil {
+			password = auconfigenv.Get(*rawConfig.PasswordEnvVar)
+			if password == "" {
+				return nil, fmt.Errorf("kafka-topic %s password environment variable %s is empty", rawConfig.Topic, rawConfig.PasswordEnvVar)
+			}
+		} else if rawConfig.Password != nil {
+			password = auconfigenv.Get(*rawConfig.PasswordEnvVar)
+			if password == "" {
+				return nil, fmt.Errorf("kafka-topic %s password value is empty", rawConfig.Topic)
+			}
+		} else {
+			return nil, fmt.Errorf("kafka-topic %s neither password environment variable or password value is set", rawConfig.Topic)
 		}
 
 		topicConfigs[key] = TopicConfig{
