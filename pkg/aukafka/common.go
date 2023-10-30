@@ -11,7 +11,7 @@ import (
 	"github.com/twmb/franz-go/pkg/sasl/scram"
 )
 
-func defaultTopicOptions(config TopicConfig) []kgo.Opt {
+func defaultTopicOptions(logKey string, config TopicConfig) []kgo.Opt {
 	tlsDialer := &tls.Dialer{
 		NetDialer: &net.Dialer{Timeout: 10 * time.Second},
 		Config:    &tls.Config{InsecureSkipVerify: true},
@@ -40,7 +40,7 @@ func defaultTopicOptions(config TopicConfig) []kgo.Opt {
 		kgo.SessionTimeout(30 * time.Second),
 		kgo.RequestRetries(2),
 		kgo.RetryTimeout(5 * time.Second),
-		kgo.WithLogger(Logger{}),
+		kgo.WithLogger(Logger{Key: logKey}),
 	}
 
 	return opts

@@ -5,25 +5,27 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-type Logger struct{}
-
-func (l Logger) Level() kgo.LogLevel {
-	return kgo.LogLevelInfo // set to Debug to see all output
+type Logger struct {
+	Key string
 }
 
-func (l Logger) Log(level kgo.LogLevel, msg string, keyvals ...any) {
+func (l Logger) Level() kgo.LogLevel {
+	return kgo.LogLevelDebug // set to Debug to see all output
+}
+
+func (l Logger) Log(level kgo.LogLevel, msg string, _ ...any) {
 	switch level {
 	case kgo.LogLevelError:
-		aulogging.Logger.NoCtx().Error().Print("kgo error: " + msg)
+		aulogging.Logger.NoCtx().Error().Printf("kgo %s error: %s", l.Key, msg)
 		return
 	case kgo.LogLevelWarn:
-		aulogging.Logger.NoCtx().Warn().Print("kgo warning: " + msg)
+		aulogging.Logger.NoCtx().Warn().Printf("kgo %s warning: %s", l.Key, msg)
 		return
 	case kgo.LogLevelInfo:
-		aulogging.Logger.NoCtx().Info().Print("kgo info: " + msg)
+		aulogging.Logger.NoCtx().Info().Printf("kgo %s info: %s", l.Key, msg)
 		return
 	case kgo.LogLevelDebug:
-		aulogging.Logger.NoCtx().Debug().Print("kgo debug: " + msg)
+		aulogging.Logger.NoCtx().Debug().Printf("kgo %s debug: %s", l.Key, msg)
 		return
 	default:
 		return

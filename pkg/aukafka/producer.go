@@ -3,6 +3,7 @@ package aukafka
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 	"github.com/twmb/franz-go/pkg/kgo"
@@ -17,7 +18,7 @@ func CreateProducer[V any](
 	config TopicConfig,
 	customOpts ...kgo.Opt,
 ) (*Producer[V], error) {
-	opts := defaultTopicOptions(config)
+	opts := defaultTopicOptions(fmt.Sprintf("%s producer", config.Topic), config)
 	opts = append(opts, customOpts...)
 	opts = append(opts, kgo.DefaultProduceTopic(config.Topic), kgo.ProducerBatchCompression(kgo.NoCompression()))
 
