@@ -1,47 +1,20 @@
 package aukafka
 
-import (
-	"crypto/tls"
-	"net"
-	"time"
+import "github.com/IBM/sarama"
 
-	"github.com/twmb/franz-go/pkg/kgo"
-	"github.com/twmb/franz-go/pkg/sasl"
-	"github.com/twmb/franz-go/pkg/sasl/plain"
-	"github.com/twmb/franz-go/pkg/sasl/scram"
-)
-
-func defaultTopicOptions(logKey string, config TopicConfig) []kgo.Opt {
-	tlsDialer := &tls.Dialer{
-		NetDialer: &net.Dialer{Timeout: 10 * time.Second},
-		Config:    &tls.Config{InsecureSkipVerify: true},
+func mergeConfigWithPreset(
+	topicConfig TopicConfig,
+	configPreset *sarama.Config,
+) (*sarama.Config, error) {
+	var clientConfig *sarama.Config
+	if configPreset != nil {
+		clientConfig = configPreset
+	} else {
+		clientConfig = sarama.NewConfig()
 	}
-
-	var mechanism sasl.Mechanism
-	switch config.AuthType {
-	case "sha256":
-		mechanism = scram.Auth{
-			User: config.Username,
-			Pass: config.Password,
-		}.AsSha256Mechanism()
-	case "plain":
-		fallthrough
-	default:
-		mechanism = plain.Auth{
-			User: config.Username,
-			Pass: config.Password,
-		}.AsMechanism()
-	}
-
-	opts := []kgo.Opt{
-		kgo.SeedBrokers(config.Brokers...),
-		kgo.SASL(mechanism),
-		kgo.Dialer(tlsDialer.DialContext),
-		kgo.SessionTimeout(30 * time.Second),
-		kgo.RequestRetries(2),
-		kgo.RetryTimeout(5 * time.Second),
-		kgo.WithLogger(Logger{Key: logKey}),
-	}
-
-	return opts
+	clientConfig.Net.SASL.User = topicConfig.Username
+	clientConfig.Net.SASL.Password = topicConfig.Password
+	clientConfig.Net.SASL.Enable = true
+	clientConfig.Net.SASL.Mechanism = sarama.SASLMechanism(topicConfig.AuthType)
+	return clientConfig, nil
 }
