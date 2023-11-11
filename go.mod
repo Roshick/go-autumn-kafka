@@ -3,7 +3,7 @@ module github.com/Roshick/go-autumn-kafka
 go 1.21.4
 
 require (
-	github.com/IBM/sarama v1.42.0
+	github.com/IBM/sarama v1.42.1
 	github.com/StephanHCB/go-autumn-config-api v0.2.1
 	github.com/StephanHCB/go-autumn-config-env v0.2.2
 	github.com/StephanHCB/go-autumn-logging v0.3.0
