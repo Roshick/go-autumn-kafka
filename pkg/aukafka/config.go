@@ -3,6 +3,7 @@ package aukafka
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/IBM/sarama"
 
 	auconfigapi "github.com/StephanHCB/go-autumn-config-api"
 	auconfigenv "github.com/StephanHCB/go-autumn-config-env"
@@ -26,7 +27,7 @@ type TopicConfig struct {
 	Username      string
 	Password      string
 	ConsumerGroup *string
-	AuthType      string
+	AuthType      sarama.SASLMechanism
 }
 
 type Config struct {
@@ -91,7 +92,7 @@ func parseTopicConfigs(jsonString string) (map[string]TopicConfig, error) {
 			Username:      rawConfig.Username,
 			Password:      password,
 			ConsumerGroup: rawConfig.ConsumerGroup,
-			AuthType:      rawConfig.AuthType,
+			AuthType:      sarama.SASLMechanism(rawConfig.AuthType),
 		}
 	}
 	return topicConfigs, nil

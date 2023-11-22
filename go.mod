@@ -7,6 +7,7 @@ require (
 	github.com/StephanHCB/go-autumn-config-api v0.2.1
 	github.com/StephanHCB/go-autumn-config-env v0.2.2
 	github.com/StephanHCB/go-autumn-logging v0.3.0
+	github.com/xdg-go/scram v1.1.2
 )
 
 require (
@@ -28,7 +29,10 @@ require (
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.11.0 // indirect
+	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
+	github.com/xdg-go/stringprep v1.0.4 // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
