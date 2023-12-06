@@ -132,6 +132,14 @@ func ParseTopicConfigs(jsonString string) (map[string]TopicConfig, error) {
 
 // DEPRECATED
 
+type Config struct {
+	vTopicConfigs map[string]TopicConfig
+}
+
+func NewConfig() *Config {
+	return new(Config)
+}
+
 func (c *DefaultConfigImpl) ConfigItems() []auconfigapi.ConfigItem {
 	return []auconfigapi.ConfigItem{
 		{
