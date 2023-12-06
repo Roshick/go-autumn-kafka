@@ -1,4 +1,4 @@
-package aukafka
+package kafka
 
 import (
 	"encoding/json"
@@ -9,7 +9,9 @@ import (
 	auconfigenv "github.com/StephanHCB/go-autumn-config-env"
 )
 
-const KeyKafkaTopicsConfig = "KAFKA_TOPICS_CONFIG"
+const (
+	DefaultKeyKafkaTopicsConfig = "KAFKA_TOPICS_CONFIG"
+)
 
 type rawTopicConfig struct {
 	Topic          string   `json:"topic"`
@@ -30,23 +32,42 @@ type TopicConfig struct {
 	AuthType      sarama.SASLMechanism
 }
 
-type Config struct {
+func mergeConfigWithPreset(
+	topicConfig TopicConfig,
+	configPreset *sarama.Config,
+) (*sarama.Config, error) {
+	var clientConfig *sarama.Config
+	if configPreset != nil {
+		clientConfig = configPreset
+	} else {
+		clientConfig = sarama.NewConfig()
+	}
+	clientConfig.Net.SASL.User = topicConfig.Username
+	clientConfig.Net.SASL.Password = topicConfig.Password
+	clientConfig.Net.SASL.Enable = true
+	clientConfig.Net.SASL.Mechanism = topicConfig.AuthType
+	if topicConfig.AuthType == sarama.SASLTypeSCRAMSHA256 && clientConfig.Net.SASL.SCRAMClientGeneratorFunc == nil {
+		clientConfig.Net.SASL.SCRAMClientGeneratorFunc = NewSha256ScramClient
+	}
+	if topicConfig.AuthType == sarama.SASLTypeSCRAMSHA512 && clientConfig.Net.SASL.SCRAMClientGeneratorFunc == nil {
+		clientConfig.Net.SASL.SCRAMClientGeneratorFunc = NewSha512ScramClient
+	}
+	return clientConfig, nil
+}
+
+type DefaultConfigImpl struct {
 	vTopicConfigs map[string]TopicConfig
 }
 
-func NewConfig() *Config {
-	return new(Config)
-}
-
-func (c *Config) TopicConfigs() map[string]TopicConfig {
+func (c *DefaultConfigImpl) TopicConfigs() map[string]TopicConfig {
 	return c.vTopicConfigs
 }
 
-func (c *Config) ConfigItems() []auconfigapi.ConfigItem {
+func DefaultConfigItems() []auconfigapi.ConfigItem {
 	return []auconfigapi.ConfigItem{
 		{
-			Key:         KeyKafkaTopicsConfig,
-			EnvName:     KeyKafkaTopicsConfig,
+			Key:         DefaultKeyKafkaTopicsConfig,
+			EnvName:     DefaultKeyKafkaTopicsConfig,
 			Default:     "{}",
 			Description: "configuration consisting of topic keys (not necessarily the topic name, rather the key used by the application to produce events for or consume of specific topics) and their respective authentication",
 			Validate: func(key string) error {
@@ -58,8 +79,20 @@ func (c *Config) ConfigItems() []auconfigapi.ConfigItem {
 	}
 }
 
-func (c *Config) Obtain(getter func(key string) string) {
-	c.vTopicConfigs, _ = parseTopicConfigs(getter(KeyKafkaTopicsConfig))
+type ValuesProvider interface {
+	ObtainValues(configItems []auconfigapi.ConfigItem) (map[string]string, error)
+}
+
+func ObtainDefaultConfig(provider ValuesProvider) (*DefaultConfigImpl, error) {
+	values, err := provider.ObtainValues(DefaultConfigItems())
+	if err != nil {
+		return nil, fmt.Errorf("failed to obtain configuration values: %s", err.Error())
+	}
+
+	vTopicConfigs, _ := parseTopicConfigs(values[DefaultKeyKafkaTopicsConfig])
+	return &DefaultConfigImpl{
+		vTopicConfigs: vTopicConfigs,
+	}, nil
 }
 
 func parseTopicConfigs(jsonString string) (map[string]TopicConfig, error) {

@@ -1,4 +1,4 @@
-package aukafka
+package kafka
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type Consumer[E any] struct {
 	receiveCallback func(ctx context.Context, key *string, event *E, timestamp time.Time) error
 }
 
-func CreateConsumer[E any](
+func NewConsumer[E any](
 	ctx context.Context,
 	topicConfig TopicConfig,
 	receiveCallback func(context.Context, *string, *E, time.Time) error,
