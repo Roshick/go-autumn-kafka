@@ -1,4 +1,4 @@
-package aukafka
+package kafka
 
 import (
 	"crypto/sha256"
