@@ -1,4 +1,4 @@
-package kafka
+package aukafka
 
 import (
 	"context"
@@ -14,7 +14,7 @@ type SyncProducer[V any] struct {
 	topic  string
 }
 
-func NewSyncProducer[V any](
+func CreateSyncProducer[V any](
 	_ context.Context,
 	topicConfig TopicConfig,
 	configPreset *sarama.Config,
@@ -68,6 +68,6 @@ func (p *SyncProducer[V]) Produce(
 func (p *SyncProducer[E]) Close(ctx context.Context) {
 	err := p.client.Close()
 	if err != nil {
-		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Print("failed to close kafka producer")
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Print("failed to close aukafka producer")
 	}
 }

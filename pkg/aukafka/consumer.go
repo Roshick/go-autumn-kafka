@@ -1,4 +1,4 @@
-package kafka
+package aukafka
 
 import (
 	"context"
@@ -17,7 +17,7 @@ type Consumer[E any] struct {
 	receiveCallback func(ctx context.Context, key *string, event *E, timestamp time.Time) error
 }
 
-func NewConsumer[E any](
+func CreateConsumer[E any](
 	ctx context.Context,
 	topicConfig TopicConfig,
 	receiveCallback func(context.Context, *string, *E, time.Time) error,
@@ -50,7 +50,7 @@ func NewConsumer[E any](
 func (c *Consumer[E]) Close(ctx context.Context) {
 	err := c.client.Close()
 	if err != nil {
-		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Print("failed to close kafka consumer")
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Print("failed to close aukafka consumer")
 	}
 }
 
@@ -58,7 +58,7 @@ func (c *Consumer[E]) run(ctx context.Context) {
 	defer func() {
 		r := recover()
 		if err, ok := r.(error); ok {
-			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Print("caught panic in kafka consumer")
+			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Print("caught panic in aukafka consumer")
 		}
 	}()
 
@@ -70,7 +70,7 @@ func (c *Consumer[E]) run(ctx context.Context) {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 				return
 			}
-			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Print("kafka consumer returned with error")
+			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Print("aukafka consumer returned with error")
 		}
 	}
 }
@@ -124,7 +124,7 @@ func (c *Consumer[E]) ConsumeClaim(
 				session.MarkMessage(message, "")
 			}
 		// Should return when `session.Context()` is done.
-		// If not, will raise `ErrRebalanceInProgress` or `read tcp <ip>:<port>: i/o timeout` when kafka rebalance. see:
+		// If not, will raise `ErrRebalanceInProgress` or `read tcp <ip>:<port>: i/o timeout` when aukafka rebalance. see:
 		// https://github.com/IBM/sarama/issues/1192
 		case <-session.Context().Done():
 			return nil
