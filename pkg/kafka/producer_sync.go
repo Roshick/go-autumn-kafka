@@ -14,7 +14,7 @@ type SyncProducer[V any] struct {
 	topic  string
 }
 
-func CreateSyncProducer[V any](
+func NewSyncProducer[V any](
 	_ context.Context,
 	topicConfig TopicConfig,
 	configPreset *sarama.Config,
