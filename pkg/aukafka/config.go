@@ -140,7 +140,11 @@ func NewConfig() *Config {
 	return new(Config)
 }
 
-func (c *DefaultConfigImpl) ConfigItems() []auconfigapi.ConfigItem {
+func (c *Config) TopicConfigs() map[string]TopicConfig {
+	return c.vTopicConfigs
+}
+
+func (c *Config) ConfigItems() []auconfigapi.ConfigItem {
 	return []auconfigapi.ConfigItem{
 		{
 			Key:         DefaultKeyKafkaTopicsConfig,
@@ -156,6 +160,6 @@ func (c *DefaultConfigImpl) ConfigItems() []auconfigapi.ConfigItem {
 	}
 }
 
-func (c *DefaultConfigImpl) Obtain(getter func(key string) string) {
+func (c *Config) Obtain(getter func(key string) string) {
 	c.vTopicConfigs, _ = ParseTopicConfigs(getter(DefaultKeyKafkaTopicsConfig))
 }
