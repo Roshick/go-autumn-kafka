@@ -59,42 +59,38 @@ type DefaultConfigImpl struct {
 	vTopicConfigs map[string]TopicConfig
 }
 
-func (c *DefaultConfigImpl) TopicConfigs() map[string]TopicConfig {
-	return c.vTopicConfigs
+func NewDefaultConfig() *DefaultConfigImpl {
+	return &DefaultConfigImpl{}
 }
 
-func DefaultConfigItems() []auconfigapi.ConfigItem {
+func (c *DefaultConfigImpl) TopicConfigs(key string) (TopicConfig, bool) {
+	value, ok := c.vTopicConfigs[key]
+	return value, ok
+}
+
+func (c *DefaultConfigImpl) ConfigItems() []auconfigapi.ConfigItem {
 	return []auconfigapi.ConfigItem{
 		{
 			Key:         DefaultKeyKafkaTopicsConfig,
 			EnvName:     DefaultKeyKafkaTopicsConfig,
 			Default:     "{}",
 			Description: "configuration consisting of topic keys (not necessarily the topic name, rather the key used by the application to produce events for or consume of specific topics) and their respective authentication",
-			Validate: func(value string) error {
-				_, err := ParseTopicConfigs(value)
-				return err
-			},
+			Validate:    auconfigapi.ConfigNeedsNoValidation,
 		},
 	}
 }
 
-type ValuesProvider interface {
-	ObtainValues(configItems []auconfigapi.ConfigItem) (map[string]string, error)
-}
-
-func ObtainDefaultConfig(provider ValuesProvider) (*DefaultConfigImpl, error) {
-	values, err := provider.ObtainValues(DefaultConfigItems())
-	if err != nil {
-		return nil, fmt.Errorf("failed to obtain configuration values: %s", err.Error())
+func (c *DefaultConfigImpl) ObtainValues(getter func(string) string) error {
+	if vTopicConfigs, err := parseTopicConfigs(getter(DefaultKeyKafkaTopicsConfig), getter); err != nil {
+		return err
+	} else {
+		c.vTopicConfigs = vTopicConfigs
 	}
 
-	vTopicConfigs, _ := ParseTopicConfigs(values[DefaultKeyKafkaTopicsConfig])
-	return &DefaultConfigImpl{
-		vTopicConfigs: vTopicConfigs,
-	}, nil
+	return nil
 }
 
-func ParseTopicConfigs(jsonString string) (map[string]TopicConfig, error) {
+func parseTopicConfigs(jsonString string, getter func(string) string) (map[string]TopicConfig, error) {
 	rawConfigs := make(map[string]rawTopicConfig)
 	if err := json.Unmarshal([]byte(jsonString), &rawConfigs); err != nil {
 		return nil, err
@@ -105,17 +101,17 @@ func ParseTopicConfigs(jsonString string) (map[string]TopicConfig, error) {
 		var password string
 		// We do not support accessing topics without a password
 		if rawConfig.PasswordEnvVar != nil {
-			password = auconfigenv.Get(*rawConfig.PasswordEnvVar)
+			password = getter(*rawConfig.PasswordEnvVar)
 			if password == "" {
-				return nil, fmt.Errorf("aukafka-topic %s password environment variable %s is empty", rawConfig.Topic, *rawConfig.PasswordEnvVar)
+				return nil, fmt.Errorf("kafka topic %s password environment variable %s is empty", rawConfig.Topic, *rawConfig.PasswordEnvVar)
 			}
 		} else if rawConfig.Password != nil {
-			password = auconfigenv.Get(*rawConfig.PasswordEnvVar)
+			password = getter(*rawConfig.PasswordEnvVar)
 			if password == "" {
-				return nil, fmt.Errorf("aukafka-topic %s password value is empty", rawConfig.Topic)
+				return nil, fmt.Errorf("kafka topic %s password value is empty", rawConfig.Topic)
 			}
 		} else {
-			return nil, fmt.Errorf("aukafka-topic %s neither password environment variable or password value is set", rawConfig.Topic)
+			return nil, fmt.Errorf("kafka topic %s neither password environment variable or password value is set", rawConfig.Topic)
 		}
 
 		topicConfigs[key] = TopicConfig{
@@ -162,4 +158,40 @@ func (c *Config) ConfigItems() []auconfigapi.ConfigItem {
 
 func (c *Config) Obtain(getter func(key string) string) {
 	c.vTopicConfigs, _ = ParseTopicConfigs(getter(DefaultKeyKafkaTopicsConfig))
+}
+
+func ParseTopicConfigs(jsonString string) (map[string]TopicConfig, error) {
+	rawConfigs := make(map[string]rawTopicConfig)
+	if err := json.Unmarshal([]byte(jsonString), &rawConfigs); err != nil {
+		return nil, err
+	}
+
+	topicConfigs := make(map[string]TopicConfig)
+	for key, rawConfig := range rawConfigs {
+		var password string
+		// We do not support accessing topics without a password
+		if rawConfig.PasswordEnvVar != nil {
+			password = auconfigenv.Get(*rawConfig.PasswordEnvVar)
+			if password == "" {
+				return nil, fmt.Errorf("kafka topic %s password environment variable %s is empty", rawConfig.Topic, *rawConfig.PasswordEnvVar)
+			}
+		} else if rawConfig.Password != nil {
+			password = auconfigenv.Get(*rawConfig.PasswordEnvVar)
+			if password == "" {
+				return nil, fmt.Errorf("kafka topic %s password value is empty", rawConfig.Topic)
+			}
+		} else {
+			return nil, fmt.Errorf("kafka topic %s neither password environment variable or password value is set", rawConfig.Topic)
+		}
+
+		topicConfigs[key] = TopicConfig{
+			Topic:         rawConfig.Topic,
+			Brokers:       rawConfig.Brokers,
+			Username:      rawConfig.Username,
+			Password:      password,
+			ConsumerGroup: rawConfig.ConsumerGroup,
+			AuthType:      sarama.SASLMechanism(rawConfig.AuthType),
+		}
+	}
+	return topicConfigs, nil
 }
