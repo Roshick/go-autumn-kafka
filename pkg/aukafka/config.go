@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/IBM/sarama"
+	"time"
 
 	auconfigapi "github.com/StephanHCB/go-autumn-config-api"
 	auconfigenv "github.com/StephanHCB/go-autumn-config-env"
@@ -42,6 +43,13 @@ func mergeConfigWithPreset(
 	} else {
 		clientConfig = sarama.NewConfig()
 	}
+
+	// recommended configuration for azure event hubs
+	clientConfig.Net.TLS.Enable = true
+	clientConfig.Metadata.RefreshFrequency = 3 * time.Minute
+	clientConfig.Producer.Timeout = 30 * time.Second
+	clientConfig.Consumer.Group.Session.Timeout = 30 * time.Second
+
 	clientConfig.Net.SASL.User = topicConfig.Username
 	clientConfig.Net.SASL.Password = topicConfig.Password
 	clientConfig.Net.SASL.Enable = true
