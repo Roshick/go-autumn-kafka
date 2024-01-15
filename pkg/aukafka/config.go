@@ -113,11 +113,8 @@ func parseTopicConfigs(jsonString string, getter func(string) string) (map[strin
 			if password == "" {
 				return nil, fmt.Errorf("kafka topic %s password environment variable %s is empty", rawConfig.Topic, *rawConfig.PasswordEnvVar)
 			}
-		} else if rawConfig.Password != nil {
-			password = getter(*rawConfig.PasswordEnvVar)
-			if password == "" {
-				return nil, fmt.Errorf("kafka topic %s password value is empty", rawConfig.Topic)
-			}
+		} else if rawConfig.Password != nil && *rawConfig.Password != "" {
+			password = *rawConfig.Password
 		} else {
 			return nil, fmt.Errorf("kafka topic %s neither password environment variable or password value is set", rawConfig.Topic)
 		}
@@ -183,11 +180,8 @@ func ParseTopicConfigs(jsonString string) (map[string]TopicConfig, error) {
 			if password == "" {
 				return nil, fmt.Errorf("kafka topic %s password environment variable %s is empty", rawConfig.Topic, *rawConfig.PasswordEnvVar)
 			}
-		} else if rawConfig.Password != nil {
-			password = auconfigenv.Get(*rawConfig.PasswordEnvVar)
-			if password == "" {
-				return nil, fmt.Errorf("kafka topic %s password value is empty", rawConfig.Topic)
-			}
+		} else if rawConfig.Password != nil && *rawConfig.Password != "" {
+			password = *rawConfig.Password
 		} else {
 			return nil, fmt.Errorf("kafka topic %s neither password environment variable or password value is set", rawConfig.Topic)
 		}
