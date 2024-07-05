@@ -1,4 +1,4 @@
-package aukafka
+package kafka
 
 import (
 	"context"
@@ -9,16 +9,30 @@ import (
 	aulogging "github.com/StephanHCB/go-autumn-logging"
 )
 
-type SyncProducer[V any] struct {
+type PostSendCallback func(ctx context.Context, message sarama.ProducerMessage, err error)
+
+func NoopCallback(_ context.Context, _ sarama.ProducerMessage, _ error) {}
+
+var _ PostSendCallback = NoopCallback
+
+func LogErrorCallback(ctx context.Context, _ sarama.ProducerMessage, err error) {
+	if err != nil {
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Print("failed to send kafka message")
+	}
+}
+
+var _ PostSendCallback = LogErrorCallback
+
+type AsyncProducer[V any] struct {
 	client sarama.SyncProducer
 	topic  string
 }
 
-func CreateSyncProducer[V any](
+func CreateAsyncProducer[V any](
 	_ context.Context,
 	topicConfig TopicConfig,
 	configPreset *sarama.Config,
-) (*SyncProducer[V], error) {
+) (*AsyncProducer[V], error) {
 	clientConfig, err := mergeConfigWithPreset(topicConfig, configPreset)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create sync producer client: %s", err.Error())
@@ -30,16 +44,17 @@ func CreateSyncProducer[V any](
 		return nil, fmt.Errorf("failed to create sync producer client: %s", err.Error())
 	}
 
-	return &SyncProducer[V]{
+	return &AsyncProducer[V]{
 		client: client,
 		topic:  topicConfig.Topic,
 	}, err
 }
 
-func (p *SyncProducer[V]) Produce(
-	_ context.Context,
+func (p *AsyncProducer[V]) Produce(
+	ctx context.Context,
 	key *string,
 	value *V,
+	postSendCallback PostSendCallback,
 ) error {
 	var keyBytes []byte
 	if key != nil {
@@ -59,15 +74,18 @@ func (p *SyncProducer[V]) Produce(
 		Value: sarama.ByteEncoder(valueBytes),
 	}
 
-	if _, _, err := p.client.SendMessage(&message); err != nil {
-		return err
-	}
+	go func() {
+		_, _, err := p.client.SendMessage(&message)
+		if postSendCallback != nil {
+			postSendCallback(ctx, message, err)
+		}
+	}()
 	return nil
 }
 
-func (p *SyncProducer[E]) Close(ctx context.Context) {
+func (p *AsyncProducer[E]) Close(ctx context.Context) {
 	err := p.client.Close()
 	if err != nil {
-		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Print("failed to close aukafka producer")
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Print("failed to close kafka producer")
 	}
 }

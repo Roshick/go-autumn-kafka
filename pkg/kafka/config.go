@@ -1,8 +1,9 @@
-package aukafka
+package kafka
 
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/IBM/sarama"
 
 	auconfigapi "github.com/StephanHCB/go-autumn-config-api"
