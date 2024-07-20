@@ -6,7 +6,7 @@ require (
 	github.com/IBM/sarama v1.43.2
 	github.com/StephanHCB/go-autumn-config-api v0.2.2
 	github.com/StephanHCB/go-autumn-config-env v0.2.3
-	github.com/StephanHCB/go-autumn-logging v0.3.0
+	github.com/StephanHCB/go-autumn-logging v0.4.0
 	github.com/xdg-go/scram v1.1.2
 )
 
