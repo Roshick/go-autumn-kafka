@@ -12,9 +12,9 @@ import (
 )
 
 type Consumer[E any] struct {
-	client          sarama.ConsumerGroup
-	topicConfig     TopicConfig
-	receiveCallback func(ctx context.Context, key *string, event *E, timestamp time.Time) error
+	client       sarama.ConsumerGroup
+	topicConfig  TopicConfig
+	groupHandler *groupHandler[E]
 }
 
 func CreateConsumer[E any](
@@ -38,9 +38,11 @@ func CreateConsumer[E any](
 	}
 
 	consumer := Consumer[E]{
-		client:          client,
-		topicConfig:     topicConfig,
-		receiveCallback: receiveCallback,
+		client:      client,
+		topicConfig: topicConfig,
+		groupHandler: &groupHandler[E]{
+			receiveCallback: receiveCallback,
+		},
 	}
 
 	go consumer.run(ctx)
@@ -50,7 +52,7 @@ func CreateConsumer[E any](
 func (c *Consumer[E]) Close(ctx context.Context) {
 	err := c.client.Close()
 	if err != nil {
-		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Print("failed to close aukafka consumer")
+		aulogging.Logger.Ctx(ctx).Warn().WithErr(err).Print("failed to close kafka consumer")
 	}
 }
 
@@ -58,7 +60,7 @@ func (c *Consumer[E]) run(ctx context.Context) {
 	defer func() {
 		r := recover()
 		if err, ok := r.(error); ok {
-			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Print("caught panic in aukafka consumer")
+			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Print("caught panic in kafka consumer")
 		}
 	}()
 
@@ -66,29 +68,33 @@ func (c *Consumer[E]) run(ctx context.Context) {
 		// `Consume` should be called inside an infinite loop, when a
 		// server-side rebalance happens, the consumer session will need to be
 		// recreated to get the new claims
-		if err := c.client.Consume(ctx, []string{c.topicConfig.Topic}, c); err != nil {
+		if err := c.client.Consume(ctx, []string{c.topicConfig.Topic}, c.groupHandler); err != nil {
 			if errors.Is(err, sarama.ErrClosedConsumerGroup) {
 				return
 			}
-			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Print("aukafka consumer returned with error")
+			aulogging.Logger.Ctx(ctx).Error().WithErr(err).Print("kafka consumer returned with error")
 		}
 	}
 }
 
+type groupHandler[E any] struct {
+	receiveCallback func(ctx context.Context, key *string, event *E, timestamp time.Time) error
+}
+
 // Setup is run at the beginning of a new session, before ConsumeClaim
-func (c *Consumer[E]) Setup(sarama.ConsumerGroupSession) error {
+func (h *groupHandler[E]) Setup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
 // Cleanup is run at the end of a session, once all ConsumeClaim goroutines have exited
-func (c *Consumer[E]) Cleanup(sarama.ConsumerGroupSession) error {
+func (h *groupHandler[E]) Cleanup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
 // ConsumeClaim must start a consumer loop of ConsumerGroupClaim's Messages().
 // Once the Messages() channel is closed, the Handler must finish its processing
 // loop and exit.
-func (c *Consumer[E]) ConsumeClaim(
+func (h *groupHandler[E]) ConsumeClaim(
 	session sarama.ConsumerGroupSession,
 	claim sarama.ConsumerGroupClaim,
 ) error {
@@ -116,7 +122,7 @@ func (c *Consumer[E]) ConsumeClaim(
 							key, event, timestamp, message.Topic)
 				}
 			}
-			if err := c.receiveCallback(session.Context(), key, event, timestamp); err != nil {
+			if err := h.receiveCallback(session.Context(), key, event, timestamp); err != nil {
 				aulogging.Logger.Ctx(session.Context()).Warn().WithErr(err).
 					Printf("failed to perform callback on event key = %s, value = %s, timestamp = %v, topic = %s",
 						key, event, timestamp, message.Topic)
@@ -124,7 +130,7 @@ func (c *Consumer[E]) ConsumeClaim(
 				session.MarkMessage(message, "")
 			}
 		// Should return when `session.Context()` is done.
-		// If not, will raise `ErrRebalanceInProgress` or `read tcp <ip>:<port>: i/o timeout` when aukafka rebalance. see:
+		// If not, will raise `ErrRebalanceInProgress` or `read tcp <ip>:<port>: i/o timeout` when kafka rebalance. see:
 		// https://github.com/IBM/sarama/issues/1192
 		case <-session.Context().Done():
 			return nil
