@@ -9,7 +9,7 @@ require (
 	github.com/StephanHCB/go-autumn-config-api v0.2.2
 	github.com/StephanHCB/go-autumn-config-env v0.2.3
 	github.com/StephanHCB/go-autumn-logging v0.4.0
-	github.com/xdg-go/scram v1.1.2
+	github.com/xdg-go/scram v1.2.0
 )
 
 require (
