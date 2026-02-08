@@ -10,6 +10,8 @@ github.com/IBM/sarama v1.45.2 h1:8m8LcMCu3REcwpa7fCP6v2fuPuzVwXDAM2DOv3CBrKw=
 github.com/IBM/sarama v1.45.2/go.mod h1:ppaoTcVdGv186/z6MEKsMm70A5fwJfRTpstI37kVn3Y=
 github.com/IBM/sarama v1.46.2 h1:65JJmZpxKUWe/7HEHmc56upTfAvgoxuyu4Ek+TcevDE=
 github.com/IBM/sarama v1.46.2/go.mod h1:PDOGmVeKmW744c/0d4CZ0MfrzmcIYtpmS5+KIWs1zHQ=
+github.com/IBM/sarama v1.46.3 h1:njRsX6jNlnR+ClJ8XmkO+CM4unbrNr/2vB5KK6UA+IE=
+github.com/IBM/sarama v1.46.3/go.mod h1:GTUYiF9DMOZVe3FwyGT+dtSPceGFIgA+sPc5u6CBwko=
 github.com/StephanHCB/go-autumn-config-api v0.2.2 h1:A+DO0JT0dc/4e/UN6XwYCE7VNCXHL5Xlg8UrAqTbNXE=
 github.com/StephanHCB/go-autumn-config-api v0.2.2/go.mod h1:6nJBwuT1uURHApOSFr6Rw+naK2YkO+sAduwEWZ0qsSU=
 github.com/StephanHCB/go-autumn-config-env v0.2.3 h1:l77gLvehRWhL3bPVi/BLTMW3IWCuHMmba3ahrSe8SQU=
@@ -62,6 +64,8 @@ github.com/klauspost/compress v1.17.11 h1:In6xLpyWOi1+C7tXUUWv2ot1QvBjxevKAaI6IX
 github.com/klauspost/compress v1.17.11/go.mod h1:pMDklpSncoRMuLFrf1W9Ss9KT+0rH90U12bZKk7uwG0=
 github.com/klauspost/compress v1.18.0 h1:c/Cqfb0r+Yi+JtIEq73FWXVkRonBlf0CRNYc8Zttxdo=
 github.com/klauspost/compress v1.18.0/go.mod h1:2Pp+KzxcywXVXMr50+X0Q/Lsb43OQHYWRCY2AiWywWQ=
+github.com/klauspost/compress v1.18.1 h1:bcSGx7UbpBqMChDtsF28Lw6v/G94LPrrbMbdC3JH2co=
+github.com/klauspost/compress v1.18.1/go.mod h1:ZQFFVG+MdnR0P+l6wpXgIL4NTtwiKIdBnrBd8Nrxr+0=
 github.com/kr/pretty v0.3.0 h1:WgNl7dwNpEZ6jJ9k1snq4pZsg7DOEN8hP9Xw0Tsjwk0=
 github.com/kr/pretty v0.3.0/go.mod h1:640gp4NfQd8pI5XOwp5fnNeVWj67G7CFk/SaSQn7NBk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=
