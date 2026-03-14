@@ -2,7 +2,7 @@ module github.com/Roshick/go-autumn-kafka
 
 go 1.25.0
 
-toolchain go1.25.7
+toolchain go1.26.1
 
 require (
 	github.com/IBM/sarama v1.47.0
